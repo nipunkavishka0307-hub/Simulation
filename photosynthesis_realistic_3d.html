@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="si"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ප්‍රභාසංශ්ලේෂණය - 3D යථාර්ථවාදී අනුකරණය (11 ශ්‍රේණිය විද්‍යාව)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;600;700&display=swap');
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  body {
+    font-family: 'Noto Sans Sinhala', sans-serif;
+    background: #060b13;
+    color: #f8fafc;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  #canvas-container {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+  }
+
+  /* Top Header */
+  .top-bar {
+    position: fixed;
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .title-card {
+    background: rgba(10, 17, 30, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 12px;
+    padding: 8px 14px;
+    pointer-events: auto;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  }
+
+  .title-card h1 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #38bdf8;
+  }
+
+  .title-card p {
+    font-size: 0.76rem;
+    color: #cbd5e1;
+  }
+
+  .equation-badge {
+    background: rgba(10, 17, 30, 0.88);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    border-radius: 12px;
+    padding: 7px 14px;
+    pointer-events: auto;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #86efac;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  }
+
+  .equation-badge small {
+    display: block;
+    font-size: 0.68rem;
+    color: #94a3b8;
+    font-weight: 400;
+  }
+
+  /* Left Controls */
+  .side-panel {
+    position: fixed;
+    top: 76px;
+    left: 12px;
+    width: 250px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .panel-box {
+    background: rgba(10, 17, 30, 0.86);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 12px;
+    padding: 10px 12px;
+    pointer-events: auto;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .panel-box h3 {
+    font-size: 0.8rem;
+    color: #fbbf24;
+    margin-bottom: 6px;
+  }
+
+  .slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .slider-row label {
+    font-size: 0.76rem;
+    color: #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: #38bdf8;
+    height: 7px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .toggle-btn {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 9px;
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    background: rgba(30, 41, 59, 0.92);
+    color: #f8fafc;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+
+  .toggle-btn.active {
+    background: #0284c7;
+    border-color: #38bdf8;
+  }
+
+  .zoom-meter {
+    margin-top: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    font-size: 0.72rem;
+    color: #86efac;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    font-size: 0.72rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #cbd5e1;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Right Info Card */
+  .info-panel {
+    position: fixed;
+    top: 76px;
+    right: 12px;
+    width: 280px;
+    z-index: 10;
+    background: rgba(10, 17, 30, 0.88);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(251, 191, 36, 0.38);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .stage-tag {
+    display: inline-block;
+    background: rgba(251, 191, 36, 0.18);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.4);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 5px;
+  }
+
+  .info-panel h2 {
+    font-size: 0.94rem;
+    color: #ffffff;
+    margin-bottom: 5px;
+  }
+
+  .info-panel p {
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+  }
+
+  /* Bottom Dock */
+  .bottom-dock {
+    position: fixed;
+    bottom: 10px;
+    left: 12px;
+    right: 12px;
+    z-index: 10;
+    background: rgba(10, 17, 30, 0.92);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.65);
+  }
+
+  .timeline-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ctrl-btn {
+    padding: 7px 14px;
+    border-radius: 9px;
+    border: none;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .btn-play {
+    background: #22c55e;
+    color: #052e16;
+    min-width: 96px;
+    justify-content: center;
+  }
+
+  .btn-play.paused {
+    background: #38bdf8;
+    color: #082f49;
+  }
+
+  .btn-reset {
+    background: #334155;
+    color: #f8fafc;
+  }
+
+  .time-display {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #38bdf8;
+    min-width: 72px;
+    text-align: right;
+  }
+
+  .chapters-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+  }
+
+  .chapter-btn {
+    flex: 1;
+    min-width: 130px;
+    padding: 7px 8px;
+    border-radius: 9px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(30, 41, 59, 0.88);
+    color: #e2e8f0;
+    font-family: inherit;
+    font-size: 0.74rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  .chapter-btn.active {
+    background: rgba(56, 189, 248, 0.28);
+    border-color: #38bdf8;
+    color: #ffffff;
+  }
+
+  /* 3D Floating HTML Labels */
+  #labels-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .label-3d {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    background: rgba(8, 13, 24, 0.86);
+    border: 1px solid rgba(56, 189, 248, 0.55);
+    color: #f8fafc;
+    padding: 3px 7px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.65);
+    transition: opacity 0.2s;
+  }
+
+  @media (max-width: 768px) {
+    .side-panel { width: 175px; top: 96px; }
+    .info-panel { width: 185px; top: 96px; }
+    .equation-badge { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="canvas-container"><canvas width="720" height="1408" style="display: block; width: 360px; height: 704px;"></canvas></div>
+<div id="labels-layer"><div class="label-3d" style="left: 31.1655px; top: 534.105px; opacity: 1;">☀️ සූර්යාලෝක ශක්තිය</div><div class="label-3d" style="left: 133.835px; top: 472.79px; opacity: 1;">🌱 මූලකේශ (H₂O අවශෝෂණය)</div><div class="label-3d" style="left: 82.7633px; top: 443.474px; opacity: 1;">💧 ශෛලම නළය (Xylem)</div><div class="label-3d" style="left: 131.946px; top: 407.74px; opacity: 1;">🍯 ප්ලෝයම නළය (Phloem)</div><div class="label-3d" style="left: 219.096px; top: 293.796px; opacity: 1;">🍃 පත්‍ර තලය හා නාරටි</div><div class="label-3d" style="opacity: 0;">🟢 හරිතලවය (Chloroplast)</div><div class="label-3d" style="opacity: 0;">🌬️ පුටිකාව (Stomata)</div></div>
+
+<!-- Top Header -->
+<div class="top-bar">
+    <div style="display:flex; gap:6px; pointer-events:auto;">
+      <button class="save-file-btn" onclick="downloadCurrentHtml('photosynthesis_realistic_3d.html')">💾 Save (.html)</button>
+      <button class="save-file-btn" style="background:linear-gradient(135deg,#0284c7,#2563eb);border-color:#7dd3fc;" onclick="shareCurrentHtml('photosynthesis_realistic_3d.html')">📤 Share / Drive</button>
+    </div>
+    
+  <div class="title-card">
+    <h1>🌱 ප්‍රභාසංශ්ලේෂණය - යථාර්ථවාදී 3D අනුකරණය</h1>
+    <p>11 ශ්‍රේණිය විද්‍යාව | ළං කර බලන විට සෛලීය ව්‍යුහ සියුම්ව දිස්වේ (Semantic Zoom)</p>
+  </div>
+  <div class="equation-badge">
+    6CO₂ + 6H₂O <span style="color:#fbbf24;">───(ආලෝක ශක්තිය / හරිතප්‍රද)───▶</span> C₆H₁₂O₆ + 6O₂
+    <small>කාබන් ඩයොක්සයිඩ් + ජලය ➔ ග්ලූකෝස් + ඔක්සිජන්</small>
+  </div>
+</div>
+
+<!-- Left Controls -->
+<div class="side-panel">
+  <div class="panel-box">
+    <h3>🔍 විනිවිද පෙනීම සහ පාලනය</h3>
+    <div class="slider-row">
+      <label>
+        <span>පත්‍රය විනිවිද පෙනීම (X-Ray)</span>
+        <span id="xray-val">45%</span>
+      </label>
+      <input type="range" id="xray-slider" min="0" max="100" value="45">
+    </div>
+    <button id="toggle-labels-btn" class="toggle-btn active">
+      🏷️ නම් කිරීම් (Labels): ON
+    </button>
+    <div class="zoom-meter">
+      <span>විශාලන මට්ටම:</span>
+      <strong id="lod-status">සමස්ත ශාක දසුන</strong>
+    </div>
+  </div>
+
+  <div class="panel-box">
+    <h3>🧪 වර්ණ සංකේත</h3>
+    <div class="legend-grid">
+      <div class="legend-item"><span class="dot" style="background:#fde047;"></span>සූර්ය කිරණ</div>
+      <div class="legend-item"><span class="dot" style="background:#38bdf8;"></span>ජලය (H₂O)</div>
+      <div class="legend-item"><span class="dot" style="background:#f87171;"></span>CO₂ වායුව</div>
+      <div class="legend-item"><span class="dot" style="background:#22d3ee;"></span>ඔක්සිජන් (O₂)</div>
+      <div class="legend-item"><span class="dot" style="background:#fb923c;"></span>සුක්‍රෝස් ආහාර</div>
+      <div class="legend-item"><span class="dot" style="background:#22c55e;"></span>හරිතලව</div>
+    </div>
+  </div>
+</div>
+
+<!-- Right Info Card -->
+<div class="info-panel">
+  <div class="stage-tag" id="stage-badge">පියවර 3 / 5 (12s - 18s)</div>
+  <h2 id="stage-title">3. සූර්යාලෝක ශක්තිය අවශෝෂණය</h2>
+  <p id="stage-desc">සූර්යාලෝක කිරණ ශාක පත්‍රය මත පතිත වූ විට, මෘදුස්තර සෛල තුළ ඇති <b>හරිතලව (Chloroplasts)</b> වල අඩංගු හරිතප්‍රද මඟින් ආලෝක ශක්තිය අවශෝෂණය කරයි.</p>
+</div>
+
+<!-- Bottom Playback Dock -->
+<div class="bottom-dock">
+  <div class="timeline-row">
+    <button id="play-pause-btn" class="ctrl-btn btn-play">⏸️ Pause</button>
+    <button id="reset-btn" class="ctrl-btn btn-reset">🔄 Reset</button>
+    <input type="range" id="timeline-slider" min="0" max="30" step="0.05" value="0">
+    <div class="time-display" id="time-display">13.5s / 30s</div>
+  </div>
+
+  <div class="chapters-row">
+    <button class="chapter-btn active" data-cam="overview" data-time="0">🌳 සමස්ත ශාකය</button>
+    <button class="chapter-btn" data-cam="roots" data-time="1">🌱 මූල පද්ධතිය (H₂O)</button>
+    <button class="chapter-btn" data-cam="leaf" data-time="7">🍃 පත්‍රය හා පුටිකා (CO₂)</button>
+    <button class="chapter-btn" data-cam="cell" data-time="14">🔬 පත්‍ර ඇතුළත සෛල (Zoom)</button>
+    <button class="chapter-btn" data-cam="products" data-time="22">💧 ශෛලම / ප්ලෝයම පරිවහනය</button>
+  </div>
+</div>
+
+<!-- Three.js & OrbitControls -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+(function() {
+  if (typeof THREE === 'undefined') {
+    document.body.innerHTML = '<div style="padding:30px;color:#fff;">Three.js පූරණය වීමට අන්තර්ජාල සම්බන්ධතාව පරීක්ෂා කරන්න.</div>';
+    return;
+  }
+
+  // --- SCENE & RENDERER ---
+  const container = document.getElementById('canvas-container');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x060b13);
+  scene.fog = new THREE.FogExp2(0x060b13, 0.011);
+
+  const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.05, 200);
+  camera.position.set(1.5, 3.8, 17.5);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.06;
+  controls.minDistance = 1.4;
+  controls.maxDistance = 36;
+  controls.target.set(0.5, 0.6, 0);
+
+  // --- REALISTIC LIGHTING ---
+  const hemiLight = new THREE.HemisphereLight(0xdbeafe, 0x3f2305, 0.75);
+  scene.add(hemiLight);
+
+  const sunLight = new THREE.DirectionalLight(0xfef08a, 1.5);
+  sunLight.position.set(-10, 14, 8);
+  sunLight.castShadow = true;
+  scene.add(sunLight);
+
+  const fillLight = new THREE.PointLight(0x38bdf8, 0.6, 40);
+  fillLight.position.set(8, -2, 8);
+  scene.add(fillLight);
+
+  // --- PROCEDURAL REALISTIC TEXTURES (Canvas Generated) ---
+  function createSoilTexture() {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 512;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#3b1d08';
+    ctx.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 4500; i++) {
+      const x = Math.random() * 512;
+      const y = Math.random() * 512;
+      const r = Math.random() * 3.5 + 0.5;
+      const shades = ['#291204', '#4d260b', '#5c2e0e', '#1f0d02', '#783f15'];
+      ctx.fillStyle = shades[Math.floor(Math.random() * shades.length)];
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }
+
+  function createLeafVeinsTexture() {
+    const c = document.createElement('canvas');
+    c.width = 1024; c.height = 512;
+    const ctx = c.getContext('2d');
+    // Rich organic leaf gradient
+    const grad = ctx.createLinearGradient(0, 0, 1024, 512);
+    grad.addColorStop(0, '#15803d');
+    grad.addColorStop(0.5, '#16a34a');
+    grad.addColorStop(1, '#14532d');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1024, 512);
+
+    // Subtle cellular noise
+    for (let i = 0; i < 6000; i++) {
+      ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)';
+      ctx.fillRect(Math.random() * 1024, Math.random() * 512, 3, 3);
+    }
+
+    // Midrib (මැද නාරටිය)
+    ctx.strokeStyle = '#86efac';
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.moveTo(0, 256);
+    ctx.quadraticCurveTo(500, 250, 1024, 256);
+    ctx.stroke();
+
+    // Lateral Veins & Sub-veins (පාර්ශ්වික නාරටි)
+    for (let x = 80; x < 920; x += 95) {
+      ctx.lineWidth = 4.5 * (1 - x / 1200);
+      ctx.strokeStyle = 'rgba(187, 247, 208, 0.75)';
+      // Upper vein
+      ctx.beginPath();
+      ctx.moveTo(x, 256);
+      ctx.quadraticCurveTo(x + 60, 140, x + 150, 50);
+      ctx.stroke();
+      // Lower vein
+      ctx.beginPath();
+      ctx.moveTo(x, 256);
+      ctx.quadraticCurveTo(x + 60, 372, x + 150, 462);
+      ctx.stroke();
+
+      // Fine sub-veins
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(187, 247, 208, 0.4)';
+      ctx.beginPath();
+      ctx.moveTo(x + 55, 165);
+      ctx.lineTo(x + 115, 145);
+      ctx.moveTo(x + 55, 347);
+      ctx.lineTo(x + 115, 367);
+      ctx.stroke();
+    }
+    return new THREE.CanvasTexture(c);
+  }
+
+  function createBarkTexture() {
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 512;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#3f6212';
+    ctx.fillRect(0, 0, 256, 512);
+    for (let i = 0; i < 600; i++) {
+      ctx.fillStyle = Math.random() > 0.5 ? '#365314' : '#4d7c0f';
+      ctx.fillRect(Math.random() * 256, Math.random() * 512, 3, Math.random() * 35 + 10);
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }
+
+  const soilTex = createSoilTexture();
+  const leafTex = createLeafVeinsTexture();
+  const barkTex = createBarkTexture();
+
+  // Track X-Ray materials
+  const xrayMaterials = [];
+  function regXray(mat, maxOp, minOp) {
+    mat.userData.maxOp = maxOp;
+    mat.userData.minOp = minOp;
+    xrayMaterials.push(mat);
+    return mat;
+  }
+
+  const world = new THREE.Group();
+  scene.add(world);
+
+  // --- 1. SUN & VOLUMETRIC LIGHT RAYS ---
+  const sunGroup = new THREE.Group();
+  sunGroup.position.set(-8.5, 9.5, 3.5);
+  const sunSphere = new THREE.Mesh(
+    new THREE.SphereGeometry(1.3, 32, 32),
+    new THREE.MeshBasicMaterial({ color: 0xfef08a })
+  );
+  const sunGlow = new THREE.Mesh(
+    new THREE.SphereGeometry(1.9, 32, 32),
+    new THREE.MeshBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.22 })
+  );
+  sunGroup.add(sunSphere, sunGlow);
+  world.add(sunGroup);
+
+  // --- 2. REALISTIC SOIL CUTAWAY & ORGANIC ROOT SYSTEM ---
+  const soilGroup = new THREE.Group();
+  soilGroup.position.set(-3.2, -3.6, 0);
+  world.add(soilGroup);
+
+  // Top grass/moss crust
+  const grassCrust = new THREE.Mesh(
+    new THREE.BoxGeometry(6.8, 0.28, 4.4),
+    new THREE.MeshStandardMaterial({ color: 0x3f6212, roughness: 0.9 })
+  );
+  grassCrust.position.set(0, 1.45, 0);
+  soilGroup.add(grassCrust);
+
+  // Soil cross-section block
+  const soilMat = regXray(new THREE.MeshStandardMaterial({
+    map: soilTex,
+    roughness: 0.95,
+    transparent: true,
+    opacity: 0.65
+  }), 0.88, 0.22);
+
+  const soilBlock = new THREE.Mesh(new THREE.BoxGeometry(6.6, 2.8, 4.2), soilMat);
+  soilBlock.position.set(0, 0, 0);
+  soilGroup.add(soilBlock);
+
+  // Pebbles & soil particles in 3D
+  const pebbleGeo = new THREE.DodecahedronGeometry(0.11, 1);
+  const pebbleMat = new THREE.MeshStandardMaterial({ color: 0x78716c, roughness: 0.8 });
+  for (let i = 0; i < 38; i++) {
+    const p = new THREE.Mesh(pebbleGeo, pebbleMat);
+    p.position.set((Math.random() - 0.5) * 6.0, (Math.random() - 0.5) * 2.4, (Math.random() - 0.5) * 3.8);
+    p.scale.set(Math.random() + 0.5, Math.random() * 0.7 + 0.4, Math.random() + 0.5);
+    soilGroup.add(p);
+  }
+
+  // Organic Taproot & Lateral Roots using TubeGeometry (ප්‍රධාන මුල සහ පාර්ශ්වික මුල්)
+  const rootWoodMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.75 });
+  const rootHairMat = new THREE.MeshBasicMaterial({ color: 0xfde68a, transparent: true, opacity: 0.75 });
+
+  function makeOrganicRoot(points, rStart, rEnd) {
+    const curve = new THREE.CatmullRomCurve3(points);
+    const geo = new THREE.TubeGeometry(curve, 24, rStart, 10, false);
+    // Taper radius along curve
+    const pos = geo.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      const ringIdx = Math.floor(i / 11);
+      const t = ringIdx / 24;
+      const center = curve.getPointAt(Math.min(1, t));
+      v.fromBufferAttribute(pos, i).sub(center);
+      const scale = (rStart * (1 - t) + rEnd * t) / rStart;
+      v.multiplyScalar(scale).add(center);
+      pos.setXYZ(i, v.x, v.y, v.z);
+    }
+    geo.computeVertexNormals();
+    return new THREE.Mesh(geo, rootWoodMat);
+  }
+
+  // Main Taproot
+  const taproot = makeOrganicRoot([
+    new THREE.Vector3(0, 1.6, 0),
+    new THREE.Vector3(-0.08, 0.6, 0.05),
+    new THREE.Vector3(0.06, -0.3, -0.05),
+    new THREE.Vector3(-0.05, -1.2, 0.02)
+  ], 0.34, 0.05);
+  soilGroup.add(taproot);
+
+  // Branching Lateral Roots + Fine Root Hairs (මූලකේශ)
+  const lateralBranches = [
+    [new THREE.Vector3(-0.04, 0.8, 0), new THREE.Vector3(-0.9, 0.4, 0.4), new THREE.Vector3(-1.9, -0.1, 0.7)],
+    [new THREE.Vector3(0.02, 0.6, 0), new THREE.Vector3(0.95, 0.2, -0.3), new THREE.Vector3(2.0, -0.3, -0.6)],
+    [new THREE.Vector3(-0.02, 0.1, 0), new THREE.Vector3(-0.85, -0.4, -0.5), new THREE.Vector3(-1.7, -0.9, -0.8)],
+    [new THREE.Vector3(0.04, -0.1, 0), new THREE.Vector3(0.8, -0.6, 0.45), new THREE.Vector3(1.6, -1.05, 0.75)],
+    [new THREE.Vector3(0, 0.35, 0.1), new THREE.Vector3(0.15, -0.2, 0.9), new THREE.Vector3(0.25, -0.7, 1.5)]
+  ];
+
+  lateralBranches.forEach(pts => {
+    const bMesh = makeOrganicRoot(pts, 0.13, 0.025);
+    soilGroup.add(bMesh);
+    const curve = new THREE.CatmullRomCurve3(pts);
+    // Add delicate root hairs near the tip
+    for (let h = 0.55; h <= 0.95; h += 0.08) {
+      const pt = curve.getPointAt(h);
+      const hairGeo = new THREE.CylinderGeometry(0.006, 0.002, 0.28, 5);
+      const hair = new THREE.Mesh(hairGeo, rootHairMat);
+      hair.position.copy(pt);
+      hair.rotation.set((Math.random() - 0.5) * 2, 0, (Math.random() - 0.5) * 2);
+      soilGroup.add(hair);
+    }
+  });
+
+  // --- 3. CURVED ORGANIC PLANT STEM WITH XYLEM & PHLOEM ---
+  const stemCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-3.2, -2.1, 0),
+    new THREE.Vector3(-3.1, -0.2, 0.05),
+    new THREE.Vector3(-2.85, 1.6, 0),
+    new THREE.Vector3(-2.3, 2.5, 0) // Petiole joining leaf
+  ]);
+
+  const stemOuterMat = regXray(new THREE.MeshStandardMaterial({
+    map: barkTex,
+    roughness: 0.7,
+    transparent: true,
+    opacity: 0.52
+  }), 0.85, 0.16);
+
+  const stemOuterMesh = new THREE.Mesh(new THREE.TubeGeometry(stemCurve, 32, 0.42, 16, false), stemOuterMat);
+  world.add(stemOuterMesh);
+
+  // Inner Xylem Vessel (ශෛලම නළය)
+  const xylemCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-3.28, -2.3, 0.08),
+    new THREE.Vector3(-3.18, -0.2, 0.12),
+    new THREE.Vector3(-2.93, 1.6, 0.08),
+    new THREE.Vector3(-2.2, 2.52, 0.08),
+    new THREE.Vector3(2.8, 2.52, 0.08) // Continues inside leaf midrib!
+  ]);
+  const xylemTubeMat = new THREE.MeshPhongMaterial({ color: 0x0ea5e9, transparent: true, opacity: 0.42 });
+  world.add(new THREE.Mesh(new THREE.TubeGeometry(xylemCurve, 44, 0.09, 12, false), xylemTubeMat));
+
+  // Inner Phloem Vessel (ප්ලෝයම නළය)
+  const phloemCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(2.8, 2.34, -0.08),
+    new THREE.Vector3(-2.2, 2.34, -0.08),
+    new THREE.Vector3(-2.78, 1.5, -0.08),
+    new THREE.Vector3(-3.02, -0.2, -0.08),
+    new THREE.Vector3(-3.12, -2.3, -0.08)
+  ]);
+  const phloemTubeMat = new THREE.MeshPhongMaterial({ color: 0xf97316, transparent: true, opacity: 0.42 });
+  world.add(new THREE.Mesh(new THREE.TubeGeometry(phloemCurve, 44, 0.085, 12, false), phloemTubeMat));
+
+  // Small realistic secondary leaves on lower stem for natural plant look
+  function createSmallLeaf(x, y, z, rotY, rotZ, scale) {
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0);
+    shape.bezierCurveTo(0.5, 0.55, 1.6, 0.65, 2.4, 0);
+    shape.bezierCurveTo(1.6, -0.65, 0.5, -0.55, 0, 0);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.04, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 3 });
+    const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: leafTex, roughness: 0.5 }));
+    mesh.position.set(x, y, z);
+    mesh.rotation.set(0.3, rotY, rotZ);
+    mesh.scale.setScalar(scale);
+    world.add(mesh);
+  }
+  createSmallLeaf(-3.12, -0.3, 0.25, 0.4, -0.25, 0.75);
+  createSmallLeaf(-3.0, 0.7, -0.25, 2.7, 0.2, 0.85);
+
+  // --- 4. REALISTIC ANATOMICAL 3D HERO LEAF (සැබෑ ශාක පත්‍රයක හැඩය සහ අභ්‍යන්තර පටක) ---
+  const heroLeafGroup = new THREE.Group();
+  heroLeafGroup.position.set(-2.2, 2.45, 0);
+  world.add(heroLeafGroup);
+
+  // Real botanical leaf contour shape (අග්‍රය උල් වූ සැබෑ ශාක පත්‍ර හැඩය)
+  function buildBotanicalLeafShape() {
+    const s = new THREE.Shape();
+    s.moveTo(0, 0); // Petiole base
+    s.bezierCurveTo(0.8, 1.35, 2.6, 2.15, 4.8, 1.85);
+    s.bezierCurveTo(6.6, 1.6, 7.9, 0.75, 8.8, 0); // Pointed Leaf Tip (පත්‍ර අග්‍රය)
+    s.bezierCurveTo(7.9, -0.75, 6.6, -1.6, 4.8, -1.85);
+    s.bezierCurveTo(2.6, -2.15, 0.8, -1.35, 0, 0);
+    return s;
+  }
+
+  const leafShape = buildBotanicalLeafShape();
+
+  // Upper Cuticle & Epidermis Surface (උඩු අපිචර්මය - realistic veined leaf surface)
+  const upperLeafGeo = new THREE.ExtrudeGeometry(leafShape, {
+    depth: 0.14,
+    bevelEnabled: true,
+    bevelThickness: 0.04,
+    bevelSize: 0.04,
+    bevelSegments: 4
+  });
+  // Normalize UVs so leaf vein texture maps cleanly across the leaf blade
+  const posAttr = upperLeafGeo.attributes.position;
+  const uvAttr = upperLeafGeo.attributes.uv;
+  for (let i = 0; i < posAttr.count; i++) {
+    const px = posAttr.getX(i);
+    const py = posAttr.getY(i);
+    uvAttr.setXY(i, px / 8.8, (py + 2.0) / 4.0);
+  }
+
+  const upperLeafMat = regXray(new THREE.MeshStandardMaterial({
+    map: leafTex,
+    roughness: 0.42,
+    metalness: 0.05,
+    transparent: true,
+    opacity: 0.58,
+    side: THREE.DoubleSide
+  }), 0.94, 0.12);
+
+  const upperLeafMesh = new THREE.Mesh(upperLeafGeo, upperLeafMat);
+  upperLeafMesh.rotation.x = Math.PI / 2;
+  upperLeafMesh.position.set(0, 0.68, 0);
+  heroLeafGroup.add(upperLeafMesh);
+
+  // Lower Epidermis Surface (යටි අපිචර්මය)
+  const lowerLeafMat = regXray(new THREE.MeshStandardMaterial({
+    color: 0x15803d,
+    roughness: 0.6,
+    transparent: true,
+    opacity: 0.52
+  }), 0.9, 0.12);
+
+  const lowerLeafMesh = new THREE.Mesh(upperLeafGeo, lowerLeafMat);
+  lowerLeafMesh.rotation.x = Math.PI / 2;
+  lowerLeafMesh.position.set(0, -0.58, 0);
+  heroLeafGroup.add(lowerLeafMesh);
+
+  // --- SEMANTIC ZOOM: MICROSCOPIC INTERNAL CELLS (ළං කර බලන විට මතුවන සෛලීය ව්‍යුහය) ---
+  const microDetailGroup = new THREE.Group();
+  heroLeafGroup.add(microDetailGroup);
+
+  const palisadeCellMat = new THREE.MeshPhongMaterial({
+    color: 0x4ade80,
+    transparent: true,
+    opacity: 0.26,
+    shininess: 70
+  });
+  const chloroplastMat = new THREE.MeshPhongMaterial({
+    color: 0x15803d,
+    emissive: 0x22c55e,
+    emissiveIntensity: 0.35,
+    shininess: 90
+  });
+  const thylakoidMat = new THREE.MeshBasicMaterial({ color: 0xbbf7d0 });
+
+  const allChloroplasts = [];
+
+  // Populate realistic columnar Palisade Mesophyll cells inside leaf contour
+  const cellCoords = [
+    [1.8, 0.22, -0.65], [2.7, 0.22, -0.75], [3.6, 0.22, -0.8], [4.5, 0.22, -0.75], [5.4, 0.22, -0.6],
+    [1.8, 0.22,  0.65], [2.7, 0.22,  0.75], [3.6, 0.22,  0.8], [4.5, 0.22,  0.75], [5.4, 0.22,  0.6],
+    [2.3, -0.22, -0.5], [3.4, -0.22,  0.55], [4.8, -0.22, -0.45]
+  ];
+
+  cellCoords.forEach(([cx, cy, cz]) => {
+    const cellGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.55, 14);
+    const cell = new THREE.Mesh(cellGeo, palisadeCellMat);
+    cell.position.set(cx, cy, cz);
+    microDetailGroup.add(cell);
+
+    // 3 Chloroplasts inside each cell with internal Grana stacks
+    for (let k = -1; k <= 1; k++) {
+      const ch = new THREE.Group();
+      const shell = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), chloroplastMat);
+      shell.scale.set(1.35, 0.65, 0.85);
+      ch.add(shell);
+
+      const g1 = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.09, 8), thylakoidMat);
+      g1.position.x = -0.04;
+      const g2 = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.09, 8), thylakoidMat);
+      g2.position.x = 0.04;
+      ch.add(g1, g2);
+
+      ch.position.set(cx + (k * 0.1), cy + (k * 0.12), cz + ((k % 2) * 0.08));
+      microDetailGroup.add(ch);
+      allChloroplasts.push(ch);
+    }
+  });
+
+  // Detailed Hero Chloroplast (Center-front for clear inspection)
+  const heroChloroplast = new THREE.Group();
+  heroChloroplast.position.set(4.1, 0.15, 0.35);
+  const heroChShell = new THREE.Mesh(
+    new THREE.SphereGeometry(0.46, 24, 18),
+    new THREE.MeshPhongMaterial({ color: 0x16a34a, emissive: 0x22c55e, emissiveIntensity: 0.4, transparent: true, opacity: 0.72 })
+  );
+  heroChShell.scale.set(1.45, 0.72, 0.9);
+  heroChloroplast.add(heroChShell);
+
+  for (let gx = -0.26; gx <= 0.26; gx += 0.26) {
+    const granum = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.32, 12), thylakoidMat);
+    granum.position.set(gx, 0, 0);
+    heroChloroplast.add(granum);
+  }
+  microDetailGroup.add(heroChloroplast);
+  allChloroplasts.push(heroChloroplast);
+
+  // Guard Cells & Stomata on Lower Epidermis (පුටිකා විවරය)
+  const guardMat = new THREE.MeshPhongMaterial({ color: 0x4ade80, emissive: 0x15803d });
+  const guardL = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.09, 10, 20, Math.PI), guardMat);
+  guardL.rotation.set(Math.PI / 2, 0, Math.PI / 2);
+  guardL.position.set(3.9, -0.62, 0.55);
+
+  const guardR = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.09, 10, 20, Math.PI), guardMat);
+  guardR.rotation.set(Math.PI / 2, 0, -Math.PI / 2);
+  guardR.position.set(4.3, -0.62, 0.55);
+  microDetailGroup.add(guardL, guardR);
+
+  // --- ANIMATED MOLECULE PARTICLES ---
+  function buildParticlePool(count, radius, color, emissive) {
+    const list = [];
+    const geo = new THREE.SphereGeometry(radius, 12, 12);
+    const mat = new THREE.MeshPhongMaterial({ color, emissive, emissiveIntensity: 0.75 });
+    for (let i = 0; i < count; i++) {
+      const m = new THREE.Mesh(geo, mat);
+      m.visible = false;
+      world.add(m);
+      list.push({ mesh: m, offset: i / count });
+    }
+    return list;
+  }
+
+  const h2oPool = buildParticlePool(22, 0.09, 0x38bdf8, 0x0284c7);
+  const sunRayPool = buildParticlePool(18, 0.11, 0xfef08a, 0xfacc15);
+  const co2Pool = buildParticlePool(14, 0.095, 0xf87171, 0xdc2626);
+  const o2Pool = buildParticlePool(14, 0.095, 0x22d3ee, 0x06b6d4);
+  const sucrosePool = buildParticlePool(16, 0.105, 0xfb923c, 0xea580c);
+
+  // --- FLOATING 3D LABELS ---
+  const labelsInfo = [
+    { text: '☀️ සූර්යාලෝක ශක්තිය', pos: new THREE.Vector3(-7.5, 7.8, 3.2), minZoom: 99 },
+    { text: '🌱 මූලකේශ (H₂O අවශෝෂණය)', pos: new THREE.Vector3(-3.2, -4.1, 1.8), minZoom: 99 },
+    { text: '💧 ශෛලම නළය (Xylem)', pos: new THREE.Vector3(-4.3, 0.4, 0.4), minZoom: 99 },
+    { text: '🍯 ප්ලෝයම නළය (Phloem)', pos: new THREE.Vector3(-1.9, -0.2, 0.4), minZoom: 99 },
+    { text: '🍃 පත්‍ර තලය හා නාරටි', pos: new THREE.Vector3(2.8, 3.6, 0), minZoom: 99 },
+    { text: '🟢 හරිතලවය (Chloroplast)', pos: new THREE.Vector3(1.9, 2.9, 0.4), minZoom: 12 },
+    { text: '🌬️ පුටිකාව (Stomata)', pos: new THREE.Vector3(1.9, 1.6, 0.6), minZoom: 12 }
+  ];
+
+  const labelsLayer = document.getElementById('labels-layer');
+  const labelNodes = labelsInfo.map(item => {
+    const div = document.createElement('div');
+    div.className = 'label-3d';
+    div.textContent = item.text;
+    labelsLayer.appendChild(div);
+    return { div, pos: item.pos, minZoom: item.minZoom };
+  });
+
+  let labelsEnabled = true;
+  const toggleLabelsBtn = document.getElementById('toggle-labels-btn');
+  toggleLabelsBtn.addEventListener('click', () => {
+    labelsEnabled = !labelsEnabled;
+    toggleLabelsBtn.textContent = labelsEnabled ? '🏷️ නම් කිරීම් (Labels): ON' : '🏷️ නම් කිරීම් (Labels): OFF';
+    toggleLabelsBtn.classList.toggle('active', labelsEnabled);
+    labelsLayer.style.display = labelsEnabled ? 'block' : 'none';
+  });
+
+  // --- X-RAY SLIDER ---
+  const xraySlider = document.getElementById('xray-slider');
+  const xrayVal = document.getElementById('xray-val');
+  let xrayPercent = 45;
+
+  function applyXray(val) {
+    xrayPercent = parseInt(val, 10);
+    xrayVal.textContent = xrayPercent + '%';
+    const ratio = xrayPercent / 100;
+    xrayMaterials.forEach(mat => {
+      mat.opacity = mat.userData.maxOp - ratio * (mat.userData.maxOp - mat.userData.minOp);
+    });
+  }
+  xraySlider.addEventListener('input', e => applyXray(e.target.value));
+  applyXray(45);
+
+  // --- CAMERA PRESETS ---
+  const camPresets = {
+    overview: { pos: new THREE.Vector3(1.5, 3.8, 17.5), target: new THREE.Vector3(0.5, 0.6, 0) },
+    roots:    { pos: new THREE.Vector3(-3.2, -2.2, 7.2), target: new THREE.Vector3(-3.2, -3.5, 0) },
+    leaf:     { pos: new THREE.Vector3(2.2, 3.6, 7.8),   target: new THREE.Vector3(2.0, 2.4, 0) },
+    cell:     { pos: new THREE.Vector3(1.9, 2.6, 2.8),   target: new THREE.Vector3(1.9, 2.55, 0.3) },
+    products: { pos: new THREE.Vector3(-0.8, 1.5, 9.2),  target: new THREE.Vector3(-0.8, 1.2, 0) }
+  };
+
+  let lerpCamPos = null;
+  let lerpTargetPos = null;
+
+  function moveCameraTo(key) {
+    const p = camPresets[key];
+    if (!p) return;
+    lerpCamPos = p.pos.clone();
+    lerpTargetPos = p.target.clone();
+    // Automatically boost X-ray slightly when zooming into leaf cells so internal cells shine
+    if (key === 'cell' && xrayPercent < 65) {
+      xraySlider.value = 72;
+      applyXray(72);
+    }
+  }
+
+  controls.addEventListener('start', () => {
+    lerpCamPos = null;
+    lerpTargetPos = null;
+  });
+
+  // --- TIMELINE & STAGES ---
+  let simTime = 0;
+  const duration = 30;
+  let playing = true;
+
+  const playBtn = document.getElementById('play-pause-btn');
+  const resetBtn = document.getElementById('reset-btn');
+  const timeSlider = document.getElementById('timeline-slider');
+  const timeText = document.getElementById('time-display');
+  const stageBadge = document.getElementById('stage-badge');
+  const stageTitle = document.getElementById('stage-title');
+  const stageDesc = document.getElementById('stage-desc');
+  const lodStatus = document.getElementById('lod-status');
+  const chapterBtns = document.querySelectorAll('.chapter-btn');
+
+  const stageData = [
+    {
+      end: 6,
+      badge: 'පියවර 1 / 5 (0s - 6s)',
+      title: '1. පසෙන් ජලය අවශෝෂණය (H₂O)',
+      desc: 'පාංශු අංශු අතර ඇති ජලය ආස්‍රැතිය මඟින් <b>මූලකේශ (Root hairs)</b> තුළට උරාගෙන, <b>ශෛලම වාහිනී (Xylem)</b> ඔස්සේ කඳ දිගේ ඉහළට පත්‍ර නාරටි වෙත ගමන් කරයි.'
+    },
+    {
+      end: 12,
+      badge: 'පියවර 2 / 5 (6s - 12s)',
+      title: '2. පුටිකා හරහා CO₂ ඇතුළු වීම',
+      desc: 'පත්‍රයේ යටි පෘෂ්ඨයේ ඇති <b>පුටිකා (Stomata)</b> විවෘත වී, වායුගෝලයේ ඇති කාබන් ඩයොක්සයිඩ් (CO₂) විසරණය මඟින් පත්‍ර මධ්‍ය සෛල වෙත ඇතුළු වේ.'
+    },
+    {
+      end: 18,
+      badge: 'පියවර 3 / 5 (12s - 18s)',
+      title: '3. සූර්යාලෝක ශක්තිය අවශෝෂණය',
+      desc: 'සූර්යාලෝක කිරණ ශාක පත්‍රය මත පතිත වූ විට, මෘදුස්තර සෛල තුළ ඇති <b>හරිතලව (Chloroplasts)</b> වල අඩංගු හරිතප්‍රද මඟින් ආලෝක ශක්තිය අවශෝෂණය කරයි.'
+    },
+    {
+      end: 24,
+      badge: 'පියවර 4 / 5 (18s - 24s)',
+      title: '4. හරිතලවය තුළ ග්ලූකෝස් නිපදවීම',
+      desc: 'පත්‍රය ළං කර (Zoom) බලන විට හරිතලව තුළ <b>CO₂ සහ H₂O</b> එක් වී <b>ග්ලූකෝස් (C₆H₁₂O₆)</b> සහ අතුරු ඵලයක් ලෙස <b>ඔක්සිජන් (O₂)</b> නිපදවෙන ආකාරය දැකගත හැක.'
+    },
+    {
+      end: 30.1,
+      badge: 'පියවර 5 / 5 (24s - 30s)',
+      title: '5. ඔක්සිජන් පිටවීම සහ ආහාර පරිවහනය',
+      desc: 'නිපදවූ <b>ඔක්සිජන් (O₂)</b> පුටිකා හරහා වායුගෝලයට පිටවන අතර, ආහාර <b>සුක්‍රෝස්</b> ලෙස <b>ප්ලෝයම පටකය (Phloem)</b> ඔස්සේ ශාකය පුරා පරිසංක්‍රමණය වේ.'
+    }
+  ];
+
+  function togglePlay(state) {
+    playing = state;
+    playBtn.textContent = playing ? '⏸️ Pause' : '▶️ Play';
+    playBtn.classList.toggle('paused', !playing);
+  }
+
+  playBtn.addEventListener('click', () => togglePlay(!playing));
+  resetBtn.addEventListener('click', () => {
+    simTime = 0;
+    togglePlay(true);
+    moveCameraTo('overview');
+  });
+
+  timeSlider.addEventListener('input', e => {
+    simTime = parseFloat(e.target.value);
+    updateParticlesAndTimeline(simTime);
+  });
+
+  chapterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      chapterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      simTime = parseFloat(btn.dataset.time);
+      moveCameraTo(btn.dataset.cam);
+      togglePlay(true);
+    });
+  });
+
+  // Particle paths aligned to organic root, stem & leaf
+  const co2Waypoints = [
+    new THREE.Vector3(1.9, 1.3, 0.55),
+    new THREE.Vector3(1.9, 2.15, 0.5),
+    new THREE.Vector3(1.9, 2.6, 0.35)
+  ];
+
+  const o2Waypoints = [
+    new THREE.Vector3(1.9, 2.6, 0.35),
+    new THREE.Vector3(1.9, 2.1, 0.52),
+    new THREE.Vector3(1.9, 1.2, 0.6)
+  ];
+
+  function lerpWaypoints(pts, t) {
+    const c = Math.max(0, Math.min(0.9999, t));
+    const s = c * (pts.length - 1);
+    const i = Math.floor(s);
+    return new THREE.Vector3().lerpVectors(pts[i], pts[i + 1], s - i);
+  }
+
+  function updateParticlesAndTimeline(t) {
+    timeSlider.value = t.toFixed(2);
+    timeText.textContent = `${t.toFixed(1)}s / 30s`;
+
+    const info = stageData.find(s => t <= s.end) || stageData[0];
+    stageBadge.textContent = info.badge;
+    stageTitle.textContent = info.title;
+    stageDesc.innerHTML = info.desc;
+
+    // 1. H2O along Xylem curve
+    h2oPool.forEach(p => {
+      const prog = ((t * 0.14) + p.offset) % 1;
+      p.mesh.visible = true;
+      p.mesh.position.copy(xylemCurve.getPointAt(prog));
+    });
+
+    // 2. Stomata Guard Cells & CO2
+    const openAmt = t >= 5 ? Math.min(1, (t - 5) / 2) : 0.1;
+    guardL.position.x = 3.98 - openAmt * 0.12;
+    guardR.position.x = 4.22 + openAmt * 0.12;
+
+    co2Pool.forEach(p => {
+      if (t < 5.5) { p.mesh.visible = false; return; }
+      const prog = (((t - 5.5) * 0.22) + p.offset) % 1;
+      p.mesh.visible = true;
+      p.mesh.position.copy(lerpWaypoints(co2Waypoints, prog));
+    });
+
+    // 3. Sunlight Beams onto Leaf Blade
+    sunRayPool.forEach((p, i) => {
+      if (t < 11) { p.mesh.visible = false; return; }
+      const prog = (((t - 11) * 0.35) + p.offset) % 1;
+      p.mesh.visible = true;
+      const start = new THREE.Vector3(-8.0, 9.2, 3.2);
+      const end = new THREE.Vector3(0.2 + (i % 6) * 0.85, 3.1, ((i % 3) - 1) * 0.65);
+      p.mesh.position.lerpVectors(start, end, prog);
+    });
+
+    // 4. Chloroplast Reaction & Products
+    heroChShell.material.emissiveIntensity = t >= 17 ? 0.45 + Math.sin(t * 6) * 0.25 : 0.25;
+
+    o2Pool.forEach(p => {
+      if (t < 20.5) { p.mesh.visible = false; return; }
+      const prog = (((t - 20.5) * 0.24) + p.offset) % 1;
+      p.mesh.visible = true;
+      p.mesh.position.copy(lerpWaypoints(o2Waypoints, prog));
+    });
+
+    sucrosePool.forEach(p => {
+      if (t < 21.5) { p.mesh.visible = false; return; }
+      const prog = (((t - 21.5) * 0.16) + p.offset) % 1;
+      p.mesh.visible = true;
+      p.mesh.position.copy(phloemCurve.getPointAt(prog));
+    });
+  }
+
+  // --- SEMANTIC ZOOM (LEVEL OF DETAIL BASED ON CAMERA DISTANCE) ---
+  function updateSemanticZoom() {
+    const dist = camera.position.distanceTo(controls.target);
+
+    if (dist > 13) {
+      lodStatus.textContent = 'සමස්ත ශාක දසුන';
+      microDetailGroup.scale.setScalar(0.82);
+    } else if (dist > 6.5) {
+      lodStatus.textContent = 'පත්‍ර ව්‍යුහය හා නාරටි';
+      microDetailGroup.scale.setScalar(0.95);
+    } else {
+      lodStatus.textContent = '🔬 සෛලීය සියුම් දසුන (Micro)';
+      microDetailGroup.scale.setScalar(1.0);
+    }
+
+    // Update 3D floating labels visibility by zoom level
+    if (!labelsEnabled) return;
+    labelNodes.forEach(node => {
+      if (dist > node.minZoom) {
+        node.div.style.opacity = '0';
+        return;
+      }
+      const proj = node.pos.clone().project(camera);
+      if (proj.z > 1) {
+        node.div.style.opacity = '0';
+      } else {
+        node.div.style.left = ((proj.x * 0.5 + 0.5) * window.innerWidth) + 'px';
+        node.div.style.top = ((-proj.y * 0.5 + 0.5) * window.innerHeight) + 'px';
+        node.div.style.opacity = '1';
+      }
+    });
+  }
+
+  // --- ANIMATION LOOP ---
+  const clock = new THREE.Clock();
+  function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.1);
+
+    if (playing) {
+      simTime += dt;
+      if (simTime > duration) simTime = 0;
+    }
+
+    allChloroplasts.forEach((c, idx) => {
+      c.rotation.y = Math.sin(simTime * 1.3 + idx) * 0.25;
+    });
+
+    sunGlow.scale.setScalar(1 + Math.sin(performance.now() * 0.003) * 0.05);
+
+    if (lerpCamPos && lerpTargetPos) {
+      camera.position.lerp(lerpCamPos, 0.075);
+      controls.target.lerp(lerpTargetPos, 0.075);
+      if (camera.position.distanceTo(lerpCamPos) < 0.04) {
+        lerpCamPos = null;
+        lerpTargetPos = null;
+      }
+    }
+
+    updateParticlesAndTimeline(simTime);
+    controls.update();
+    updateSemanticZoom();
+    renderer.render(scene, camera);
+  }
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  animate();
+})();
+</script>
+
+<style>
+  .save-file-btn {
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+    color: #ffffff;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 8px 13px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.45);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: transform 0.12s;
+  }
+  .save-file-btn:active {
+    transform: scale(0.95);
+  }
+</style>
+<script>
+function downloadCurrentHtml(filename) {
+  try {
+    const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+    const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  } catch (e) {
+    alert("Save කිරීමේදී දෝෂයක් ඇති විය: " + e.message);
+  }
+}
+
+async function shareCurrentHtml(filename) {
+  try {
+    const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+    const file = new File([fullHtml], filename, { type: "text/html" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: filename,
+        text: "11 ශ්‍රේණිය විද්‍යාව 3D Simulation"
+      });
+    } else {
+      downloadCurrentHtml(filename);
+    }
+  } catch (err) {
+    if (err.name !== "AbortError") {
+      downloadCurrentHtml(filename);
+    }
+  }
+}
+</script>
+
+
+
+</body></html>
